@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub Control Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111418;
+    --surface2: #181c22;
+    --border: #1e2530;
+    --border-bright: #2a3444;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #f85149;
+    --accent4: #d29922;
+    --text: #e6edf3;
+    --text-muted: #7d8590;
+    --text-dim: #4d5566;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid Background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Auth Screen */
+  #auth-screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    background: var(--bg);
+  }
+
+  .auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    border-radius: 16px;
+    padding: 48px;
+    width: 440px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+
+  .auth-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .auth-logo svg { width: 36px; height: 36px; fill: var(--text); }
+
+  .auth-logo span {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .auth-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .auth-subtitle {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 32px;
+    line-height: 1.6;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  input[type="text"], input[type="password"], input[type="search"], select, textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border-bright);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+  }
+
+  select option { background: var(--surface2); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #0a0c0f;
+    border-color: var(--accent);
+    width: 100%;
+    justify-content: center;
+    padding: 14px 20px;
+    font-size: 13px;
+  }
+
+  .btn-primary:hover { background: #79c0ff; border-color: #79c0ff; transform: translateY(-1px); }
+
+  .btn-green { background: rgba(63, 185, 80, 0.1); color: var(--accent2); border-color: rgba(63, 185, 80, 0.3); }
+  .btn-green:hover { background: rgba(63, 185, 80, 0.2); border-color: var(--accent2); }
+
+  .btn-red { background: rgba(248, 81, 73, 0.1); color: var(--accent3); border-color: rgba(248, 81, 73, 0.3); }
+  .btn-red:hover { background: rgba(248, 81, 73, 0.2); border-color: var(--accent3); }
+
+  .btn-blue { background: rgba(88, 166, 255, 0.1); color: var(--accent); border-color: rgba(88, 166, 255, 0.3); }
+  .btn-blue:hover { background: rgba(88, 166, 255, 0.2); border-color: var(--accent); }
+
+  .btn-yellow { background: rgba(210, 153, 34, 0.1); color: var(--accent4); border-color: rgba(210, 153, 34, 0.3); }
+  .btn-yellow:hover { background: rgba(210, 153, 34, 0.2); border-color: var(--accent4); }
+
+  .btn-ghost { background: transparent; color: var(--text-muted); border-color: var(--border-bright); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+  /* Main App */
+  #app { display: none; min-height: 100vh; position: relative; z-index: 1; }
+
+  /* Sidebar */
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 260px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+  }
+
+  .sidebar-header {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .logo svg { width: 28px; height: 28px; fill: var(--text); }
+
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+  }
+
+  .profile-block {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--surface2);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  .profile-block img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--border-bright);
+    object-fit: cover;
+  }
+
+  .profile-info { flex: 1; min-width: 0; }
+  .profile-name { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .profile-handle { font-size: 10px; color: var(--text-muted); }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent2);
+    box-shadow: 0 0 6px var(--accent2);
+    flex-shrink: 0;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 16px 12px;
+    overflow-y: auto;
+  }
+
+  .nav-section {
+    margin-bottom: 24px;
+  }
+
+  .nav-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 0 8px;
+    margin-bottom: 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.15s;
+    margin-bottom: 2px;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(88, 166, 255, 0.1); color: var(--accent); border: 1px solid rgba(88, 166, 255, 0.2); }
+
+  .nav-item .icon { width: 16px; height: 16px; flex-shrink: 0; }
+
+  .sidebar-footer {
+    padding: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Main Content */
+  .main {
+    margin-left: 260px;
+    min-height: 100vh;
+    padding: 32px;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .page-subtitle { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .stat-card.blue::after { background: var(--accent); }
+  .stat-card.green::after { background: var(--accent2); }
+  .stat-card.yellow::after { background: var(--accent4); }
+  .stat-card.red::after { background: var(--accent3); }
+
+  .stat-icon { font-size: 22px; margin-bottom: 12px; }
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Repo List */
+  .repo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  .repo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .repo-card:hover {
+    border-color: var(--border-bright);
+    transform: translateY(-2px);
+  }
+
+  .repo-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .repo-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .repo-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .repo-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-private { background: rgba(210, 153, 34, 0.15); color: var(--accent4); border: 1px solid rgba(210, 153, 34, 0.3); }
+  .badge-public { background: rgba(63, 185, 80, 0.1); color: var(--accent2); border: 1px solid rgba(63, 185, 80, 0.25); }
+
+  .repo-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  /* Search Bar */
+  .search-bar {
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .search-bar input {
+    padding-left: 40px;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    border-radius: 16px;
+    padding: 32px;
+    width: 500px;
+    max-width: 95vw;
+    position: relative;
+    animation: modalIn 0.25s ease;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(-10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .close-modal {
+    position: absolute;
+    top: 20px; right: 20px;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.15s;
+  }
+
+  .close-modal:hover { background: var(--accent3); color: white; border-color: var(--accent3); }
+
+  /* Toast */
+  #toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .toast {
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 260px;
+    animation: slideIn 0.3s ease;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+  .toast.success { border-left: 3px solid var(--accent2); }
+  .toast.error { border-left: 3px solid var(--accent3); }
+  .toast.info { border-left: 3px solid var(--accent); }
+
+  /* Loading spinner */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid var(--border-bright);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Content sections */
+  .section-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+
+  .info-row:last-child { border-bottom: none; }
+  .info-key { color: var(--text-muted); }
+  .info-val { color: var(--text); font-weight: 500; }
+
+  /* Issue / PR list */
+  .list-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+
+  .list-item:last-child { border-bottom: none; }
+
+  .list-item-icon {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .icon-green { background: rgba(63, 185, 80, 0.15); color: var(--accent2); }
+  .icon-red { background: rgba(248, 81, 73, 0.15); color: var(--accent3); }
+  .icon-blue { background: rgba(88, 166, 255, 0.15); color: var(--accent); }
+  .icon-yellow { background: rgba(210, 153, 34, 0.15); color: var(--accent4); }
+
+  .list-item-title { font-weight: 600; margin-bottom: 4px; }
+  .list-item-meta { color: var(--text-muted); }
+
+  .actions-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text-muted);
+  }
+
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 13px; }
+
+  .lang-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 4px;
+  }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 12px 0;
+  }
+
+  input[type="checkbox"] {
+    width: 16px; height: 16px;
+    cursor: pointer;
+    accent-color: var(--accent);
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border-bright);
+    border-radius: 4px;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin: 2px;
+  }
+
+  .danger-zone {
+    border-color: rgba(248, 81, 73, 0.3);
+    background: rgba(248, 81, 73, 0.03);
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 16px 0;
+  }
+
+  pre {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 11px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: var(--accent2);
+    max-height: 200px;
+  }
+
+  .full-width { grid-column: 1 / -1; }
+
+  .input-row { display: flex; gap: 10px; }
+  .input-row input { flex: 1; }
+</style>
+</head>
+<body>
+
+<!-- Auth Screen -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      <span>GH Control</span>
+    </div>
+    <div class="auth-title">Connect Account</div>
+    <div class="auth-subtitle">Masukkan Personal Access Token GitHub anda. Token diperlukan untuk mengakses dan menguruskan akaun anda.</div>
+    <div class="form-group">
+      <label>Personal Access Token</label>
+      <div class="input-row">
+        <input type="password" id="token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" />
+        <button class="btn btn-ghost" onclick="toggleToken()" id="toggle-btn">👁</button>
+      </div>
+    </div>
+    <a href="https://github.com/settings/tokens/new" target="_blank" style="display:block;font-size:11px;color:var(--accent);margin-bottom:20px;text-decoration:none;">→ Jana token baru di GitHub Settings</a>
+    <button class="btn btn-primary" onclick="connect()" id="connect-btn">
+      <span id="connect-label">Sambung ke GitHub</span>
+    </button>
+    <div id="auth-error" style="margin-top:12px;font-size:12px;color:var(--accent3);display:none;"></div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        <span class="logo-text">GH Control</span>
+      </div>
+      <div class="profile-block">
+        <img id="nav-avatar" src="https://n.uguu.se/bBARaiAn.jpeg" alt="Profile" />
+        <div class="profile-info">
+          <div class="profile-name" id="nav-name">Loading...</div>
+          <div class="profile-handle" id="nav-handle">@...</div>
+        </div>
+        <div class="status-dot"></div>
+      </div>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-label">Overview</div>
+        <div class="nav-item active" onclick="showPage('dashboard')">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M1 7.775a.75.75 0 0 1 .75-.75h6.5a.75.75 0 0 1 0 1.5h-6.5A.75.75 0 0 1 1 7.775ZM1 2a.75.75 0 0 1 .75-.75h6.5a.75.75 0 0 1 0 1.5h-6.5A.75.75 0 0 1 1 2Zm0 5.5a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 0 1.5h-3.5A.75.75 0 0 1 1 7.5ZM9 2a.75.75 0 0 1 .75-.75H13.5a.75.75 0 0 1 0 1.5H9.75A.75.75 0 0 1 9 2Zm0 5.5a.75.75 0 0 1 .75-.75H13.5a.75.75 0 0 1 0 1.5H9.75A.75.75 0 0 1 9 7.5Z"/></svg>
+          Dashboard
+        </div>
+        <div class="nav-item" onclick="showPage('profile')">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0ZM8 9a6 6 0 0 0-5.93 5.013c-.18.96.56 1.987 1.53 1.987h8.8c.97 0 1.71-1.027 1.53-1.987A6 6 0 0 0 8 9Z"/></svg>
+          Profil Saya
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Repositories</div>
+        <div class="nav-item" onclick="showPage('repos')">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8Z"/></svg>
+          Senarai Repos
+        </div>
+        <div class="nav-item" onclick="openModal('create-repo-modal')">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2Z"/></svg>
+          Buat Repo Baru
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Social</div>
+        <div class="nav-item" onclick="showPage('followers')">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2 5.5a3.5 3.5 0 1 1 5.898 2.549 5.508 5.508 0 0 1 3.034 4.084.75.75 0 1 1-1.482.235 4.001 4.001 0 0 0-7.9 0 .75.75 0 0 1-1.482-.236A5.507 5.507 0 0 1 3.102 8.05 3.493 3.493 0 0 1 2 5.5ZM11 4a3.001 3.001 0 0 1 2.22 5.018 5.01 5.01 0 0 1 2.56 3.012.749.749 0 0 1-.885.954.752.752 0 0 1-.549-.514 3.507 3.507 0 0 0-2.522-2.372.75.75 0 0 1-.574-.73v-.352a.75.75 0 0 1 .416-.672A1.5 1.5 0 0 0 11 5.5.75.75 0 0 1 11 4Zm-5.5-.5a2 2 0 1 0-.001 3.999A2 2 0 0 0 5.5 3.5Z"/></svg>
+          Followers
+        </div>
+        <div class="nav-item" onclick="showPage('following')">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M15.396 4.0a.75.75 0 0 1 0 1.5h-10a.75.75 0 0 1 0-1.5Zm0 4a.75.75 0 0 1 0 1.5H9.5a.75.75 0 0 1 0-1.5Zm0 4a.75.75 0 0 1 0 1.5H9.5a.75.75 0 0 1 0-1.5ZM2 1.5a.5.5 0 0 0-1 0v13a.5.5 0 0 0 1 0Z"/></svg>
+          Following
+        </div>
+        <div class="nav-item" onclick="showPage('gists')">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M4 1.75C4 .784 4.784 0 5.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v8.586A1.75 1.75 0 0 1 14.25 15h-9a.75.75 0 0 1 0-1.5h9a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 10 4.25V1.5H5.75a.25.25 0 0 0-.25.25v2a.75.75 0 0 1-1.5 0Zm1.72 4.97a.75.75 0 0 1 1.06 0l2 2a.75.75 0 0 1 0 1.06l-2 2a.75.75 0 1 1-1.06-1.06l1.47-1.47-1.47-1.47a.75.75 0 0 1 0-1.06ZM3.28 7.78 1.81 9.25l1.47 1.47a.75.75 0 0 1-1.06 1.06l-2-2a.75.75 0 0 1 0-1.06l2-2a.75.75 0 0 1 1.06 1.06Z"/></svg>
+          Gists
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Tools</div>
+        <div class="nav-item" onclick="showPage('search')">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.499 4.499 0 1 0-8.997 0A4.499 4.499 0 0 0 11.5 7Z"/></svg>
+          Carian GitHub
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost" style="width:100%" onclick="logout()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2.75C2 1.784 2.784 1 3.75 1h4.5a.75.75 0 0 1 0 1.5h-4.5a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h4.5a.75.75 0 0 1 0 1.5h-4.5A1.75 1.75 0 0 1 2 13.25Zm10.44 4.5-1.97-1.97a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734l1.97-1.97H6.75a.75.75 0 0 1 0-1.5Z"/></svg>
+        Log Keluar
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Dashboard</div>
+          <div class="page-subtitle">Overview akaun GitHub anda</div>
+        </div>
+        <button class="btn btn-blue" onclick="loadDashboard()">↻ Refresh</button>
+      </div>
+
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card blue"><div class="stat-icon">📦</div><div class="stat-value" id="stat-repos">—</div><div class="stat-label">Repositories</div></div>
+        <div class="stat-card green"><div class="stat-icon">⭐</div><div class="stat-value" id="stat-stars">—</div><div class="stat-label">Stars Dapat</div></div>
+        <div class="stat-card yellow"><div class="stat-icon">👥</div><div class="stat-value" id="stat-followers">—</div><div class="stat-label">Followers</div></div>
+        <div class="stat-card red"><div class="stat-icon">👤</div><div class="stat-value" id="stat-following">—</div><div class="stat-label">Following</div></div>
+      </div>
+
+      <div class="section-grid">
+        <div class="card">
+          <div class="card-title">🕐 Repo Terbaru</div>
+          <div id="recent-repos">
+            <div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">📋 Info Akaun</div>
+          <div id="account-info">
+            <div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile -->
+    <div id="page-profile" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Profil Saya</div><div class="page-subtitle">Maklumat akaun GitHub</div></div>
+      </div>
+      <div id="profile-content">
+        <div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>
+      </div>
+    </div>
+
+    <!-- Repos -->
+    <div id="page-repos" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Repositories</div><div class="page-subtitle" id="repo-count-label">Semua repos anda</div></div>
+        <button class="btn btn-green" onclick="openModal('create-repo-modal')">+ Buat Repo</button>
+      </div>
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="search" id="repo-search" placeholder="Cari repository..." oninput="filterRepos()" />
+      </div>
+      <div class="actions-row">
+        <select id="repo-filter-sort" onchange="loadRepos()" style="width:auto;padding:8px 12px">
+          <option value="updated">Sort: Dikemaskini</option>
+          <option value="created">Sort: Dicipta</option>
+          <option value="pushed">Sort: Push Terbaru</option>
+          <option value="full_name">Sort: Nama</option>
+        </select>
+        <select id="repo-filter-type" onchange="loadRepos()" style="width:auto;padding:8px 12px">
+          <option value="all">Semua Jenis</option>
+          <option value="public">Public</option>
+          <option value="private">Private</option>
+          <option value="forks">Forks</option>
+          <option value="sources">Sources</option>
+        </select>
+      </div>
+      <div id="repos-container">
+        <div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>
+      </div>
+    </div>
+
+    <!-- Followers -->
+    <div id="page-followers" class="page">
+      <div class="page-header"><div><div class="page-title">Followers</div><div class="page-subtitle">Orang yang follow anda</div></div></div>
+      <div id="followers-container">
+        <div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>
+      </div>
+    </div>
+
+    <!-- Following -->
+    <div id="page-following" class="page">
+      <div class="page-header"><div><div class="page-title">Following</div><div class="page-subtitle">Orang yang anda follow</div></div></div>
+      <div id="following-container">
+        <div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>
+      </div>
+    </div>
+
+    <!-- Gists -->
+    <div id="page-gists" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Gists</div><div class="page-subtitle">Snippets kod anda</div></div>
+        <button class="btn btn-green" onclick="openModal('create-gist-modal')">+ Gist Baru</button>
+      </div>
+      <div id="gists-container">
+        <div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div id="page-search" class="page">
+      <div class="page-header"><div><div class="page-title">Carian GitHub</div><div class="page-subtitle">Cari repos, users, dan topik</div></div></div>
+      <div class="card">
+        <div class="card-title">🔎 Cari</div>
+        <div style="display:flex;gap:10px;margin-bottom:16px">
+          <input type="text" id="gh-search-input" placeholder="Masukkan kata carian..." style="flex:1" onkeydown="if(event.key==='Enter')doSearch()" />
+          <select id="gh-search-type" style="width:140px;padding:12px">
+            <option value="repositories">Repositories</option>
+            <option value="users">Users</option>
+          </select>
+          <button class="btn btn-blue" onclick="doSearch()">Cari</button>
+        </div>
+      </div>
+      <div id="search-results"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modals -->
+<div id="create-repo-modal" class="modal-overlay">
+  <div class="modal">
+    <button class="close-modal" onclick="closeModal('create-repo-modal')">✕</button>
+    <div class="modal-title">📦 Buat Repository Baru</div>
+    <div class="form-group"><label>Nama Repository *</label><input type="text" id="new-repo-name" placeholder="my-awesome-project" /></div>
+    <div class="form-group"><label>Deskripsi (optional)</label><input type="text" id="new-repo-desc" placeholder="Apa repo ini tentang?" /></div>
+    <div class="form-group">
+      <label>Visibility</label>
+      <select id="new-repo-visibility">
+        <option value="false">🌐 Public</option>
+        <option value="true">🔒 Private</option>
+      </select>
+    </div>
+    <div class="checkbox-row"><input type="checkbox" id="new-repo-readme" checked /><label style="margin-bottom:0;text-transform:none;letter-spacing:0;font-size:13px">Tambah README.md</label></div>
+    <div class="checkbox-row"><input type="checkbox" id="new-repo-gitignore" /><label style="margin-bottom:0;text-transform:none;letter-spacing:0;font-size:13px">Tambah .gitignore</label></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('create-repo-modal')">Batal</button>
+      <button class="btn btn-green" onclick="createRepo()">✓ Cipta Repository</button>
+    </div>
+  </div>
+</div>
+
+<div id="delete-repo-modal" class="modal-overlay">
+  <div class="modal">
+    <button class="close-modal" onclick="closeModal('delete-repo-modal')">✕</button>
+    <div class="modal-title" style="color:var(--accent3)">⚠ Padam Repository</div>
+    <div class="card danger-zone">
+      <p style="font-size:13px;line-height:1.7;color:var(--text-muted)">Tindakan ini <strong style="color:var(--accent3)">tidak boleh diundur</strong>. Repository <strong id="delete-repo-name" style="color:var(--text)"></strong> dan semua kandungannya akan dipadamkan selamanya.</p>
+    </div>
+    <div class="form-group" style="margin-top:16px"><label>Taip nama repo untuk sahkan</label><input type="text" id="delete-confirm-input" placeholder="Taip nama repo di sini" /></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('delete-repo-modal')">Batal</button>
+      <button class="btn btn-red" onclick="confirmDeleteRepo()">🗑 Padam Sekarang</button>
+    </div>
+  </div>
+</div>
+
+<div id="repo-detail-modal" class="modal-overlay">
+  <div class="modal" style="width:600px">
+    <button class="close-modal" onclick="closeModal('repo-detail-modal')">✕</button>
+    <div id="repo-detail-content"></div>
+  </div>
+</div>
+
+<div id="create-gist-modal" class="modal-overlay">
+  <div class="modal">
+    <button class="close-modal" onclick="closeModal('create-gist-modal')">✕</button>
+    <div class="modal-title">📄 Cipta Gist Baru</div>
+    <div class="form-group"><label>Deskripsi</label><input type="text" id="gist-desc" placeholder="Huraian gist ini..." /></div>
+    <div class="form-group"><label>Nama Fail *</label><input type="text" id="gist-filename" placeholder="example.py" /></div>
+    <div class="form-group"><label>Kandungan *</label><textarea id="gist-content" placeholder="Tampal kod anda di sini..." style="height:160px"></textarea></div>
+    <div class="checkbox-row"><input type="checkbox" id="gist-public" checked /><label style="margin-bottom:0;text-transform:none;letter-spacing:0;font-size:13px">Public Gist</label></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('create-gist-modal')">Batal</button>
+      <button class="btn btn-green" onclick="createGist()">✓ Cipta Gist</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+  let TOKEN = '';
+  let currentUser = null;
+  let allRepos = [];
+  let repoToDelete = '';
+
+  const API = 'https://api.github.com';
+
+  const headers = () => ({
+    'Authorization': `token ${TOKEN}`,
+    'Accept': 'application/vnd.github.v3+json',
+    'Content-Type': 'application/json'
+  });
+
+  async function ghFetch(path, opts = {}) {
+    const res = await fetch(API + path, { ...opts, headers: headers() });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `HTTP ${res.status}`);
+    }
+    return res.json();
+  }
+
+  // ---- AUTH ----
+  function toggleToken() {
+    const inp = document.getElementById('token-input');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+  }
+
+  async function connect() {
+    const token = document.getElementById('token-input').value.trim();
+    if (!token) { showAuthError('Sila masukkan token anda.'); return; }
+    TOKEN = token;
+    const btn = document.getElementById('connect-btn');
+    const lbl = document.getElementById('connect-label');
+    btn.disabled = true;
+    lbl.innerHTML = '<span class="spinner"></span> Menyambung...';
+    try {
+      currentUser = await ghFetch('/user');
+      localStorage.setItem('gh_token', token);
+      startApp();
+    } catch (e) {
+      TOKEN = '';
+      showAuthError('Token tidak sah atau tiada kebenaran: ' + e.message);
+      btn.disabled = false;
+      lbl.textContent = 'Sambung ke GitHub';
+    }
+  }
+
+  function showAuthError(msg) {
+    const el = document.getElementById('auth-error');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function logout() {
+    localStorage.removeItem('gh_token');
+    location.reload();
+  }
+
+  function startApp() {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    updateNavProfile();
+    loadDashboard();
+  }
+
+  function updateNavProfile() {
+    document.getElementById('nav-avatar').src = currentUser.avatar_url;
+    document.getElementById('nav-name').textContent = currentUser.name || currentUser.login;
+    document.getElementById('nav-handle').textContent = '@' + currentUser.login;
+  }
+
+  // ---- NAVIGATION ----
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    event.currentTarget && event.currentTarget.classList.add('active');
+
+    const actions = {
+      'profile': loadProfile,
+      'repos': loadRepos,
+      'followers': loadFollowers,
+      'following': loadFollowing,
+      'gists': loadGists,
+      'search': () => {}
+    };
+    if (actions[id]) actions[id]();
+  }
+
+  // ---- MODALS ----
+  function openModal(id) { document.getElementById(id).classList.add('active'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+  document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active'); });
+  });
+
+  // ---- TOAST ----
+  function toast(msg, type = 'info') {
+    const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+
+  // ---- DASHBOARD ----
+  async function loadDashboard() {
+    try {
+      if (!currentUser) currentUser = await ghFetch('/user');
+
+      document.getElementById('stat-repos').textContent = currentUser.public_repos + (currentUser.total_private_repos || 0);
+      document.getElementById('stat-followers').textContent = currentUser.followers;
+      document.getElementById('stat-following').textContent = currentUser.following;
+
+      // Load recent repos for star count
+      const repos = await ghFetch(`/user/repos?sort=updated&per_page=100`);
+      allRepos = repos;
+      const totalStars = repos.reduce((s, r) => s + r.stargazers_count, 0);
+      document.getElementById('stat-stars').textContent = totalStars;
+
+      // Recent repos
+      const recent = repos.slice(0, 5);
+      document.getElementById('recent-repos').innerHTML = recent.map(r => `
+        <div class="list-item">
+          <div class="list-item-icon icon-blue">📦</div>
+          <div style="flex:1;min-width:0">
+            <div class="list-item-title">${r.name}</div>
+            <div class="list-item-meta">${r.private ? '🔒 Private' : '🌐 Public'} · ⭐ ${r.stargazers_count} · ${timeSince(r.updated_at)}</div>
+          </div>
+          <span class="badge ${r.private ? 'badge-private' : 'badge-public'}">${r.private ? 'private' : 'public'}</span>
+        </div>`).join('');
+
+      // Account info
+      document.getElementById('account-info').innerHTML = `
+        <div class="info-row"><span class="info-key">Login</span><span class="info-val">@${currentUser.login}</span></div>
+        <div class="info-row"><span class="info-key">Nama</span><span class="info-val">${currentUser.name || '—'}</span></div>
+        <div class="info-row"><span class="info-key">Email</span><span class="info-val">${currentUser.email || '—'}</span></div>
+        <div class="info-row"><span class="info-key">Bio</span><span class="info-val" style="text-align:right;max-width:60%">${currentUser.bio || '—'}</span></div>
+        <div class="info-row"><span class="info-key">Syarikat</span><span class="info-val">${currentUser.company || '—'}</span></div>
+        <div class="info-row"><span class="info-key">Lokasi</span><span class="info-val">${currentUser.location || '—'}</span></div>
+        <div class="info-row"><span class="info-key">Blog</span><span class="info-val">${currentUser.blog ? `<a href="${currentUser.blog}" target="_blank" style="color:var(--accent)">${currentUser.blog}</a>` : '—'}</span></div>
+        <div class="info-row"><span class="info-key">Ahli Sejak</span><span class="info-val">${new Date(currentUser.created_at).toLocaleDateString('ms-MY')}</span></div>
+      `;
+    } catch (e) { toast('Gagal muatkan dashboard: ' + e.message, 'error'); }
+  }
+
+  // ---- PROFILE ----
+  async function loadProfile() {
+    const cont = document.getElementById('profile-content');
+    try {
+      if (!currentUser) currentUser = await ghFetch('/user');
+      cont.innerHTML = `
+        <div class="section-grid">
+          <div class="card" style="display:flex;align-items:center;gap:20px;grid-column:1/-1">
+            <img src="${currentUser.avatar_url}" style="width:80px;height:80px;border-radius:50%;border:3px solid var(--border-bright)" />
+            <div>
+              <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800">${currentUser.name || currentUser.login}</div>
+              <div style="color:var(--text-muted);font-size:13px;margin:4px 0">@${currentUser.login}</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:6px">${currentUser.bio || ''}</div>
+              <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+                <a href="${currentUser.html_url}" target="_blank" class="btn btn-blue btn-sm" style="font-size:11px;padding:6px 12px">Buka di GitHub →</a>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">📊 Statistik</div>
+            <div class="info-row"><span class="info-key">Public Repos</span><span class="info-val">${currentUser.public_repos}</span></div>
+            <div class="info-row"><span class="info-key">Public Gists</span><span class="info-val">${currentUser.public_gists}</span></div>
+            <div class="info-row"><span class="info-key">Followers</span><span class="info-val">${currentUser.followers}</span></div>
+            <div class="info-row"><span class="info-key">Following</span><span class="info-val">${currentUser.following}</span></div>
+            <div class="info-row"><span class="info-key">Disk Usage</span><span class="info-val">${currentUser.disk_usage ? (currentUser.disk_usage/1024).toFixed(1)+' MB' : '—'}</span></div>
+          </div>
+          <div class="card">
+            <div class="card-title">📋 Maklumat Lanjut</div>
+            <div class="info-row"><span class="info-key">Node ID</span><span class="info-val" style="font-size:10px">${currentUser.node_id}</span></div>
+            <div class="info-row"><span class="info-key">User ID</span><span class="info-val">${currentUser.id}</span></div>
+            <div class="info-row"><span class="info-key">Jenis</span><span class="info-val">${currentUser.type}</span></div>
+            <div class="info-row"><span class="info-key">Site Admin</span><span class="info-val">${currentUser.site_admin ? '✅ Ya' : '❌ Tidak'}</span></div>
+            <div class="info-row"><span class="info-key">Plan</span><span class="info-val">${currentUser.plan?.name || '—'}</span></div>
+            <div class="info-row"><span class="info-key">Daftar</span><span class="info-val">${new Date(currentUser.created_at).toLocaleDateString('ms-MY')}</span></div>
+          </div>
+        </div>`;
+    } catch (e) { cont.innerHTML = `<div class="empty-state"><p>❌ ${e.message}</p></div>`; }
+  }
+
+  // ---- REPOS ----
+  async function loadRepos() {
+    const cont = document.getElementById('repos-container');
+    cont.innerHTML = '<div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>';
+    try {
+      const sort = document.getElementById('repo-filter-sort').value;
+      const type = document.getElementById('repo-filter-type').value;
+      allRepos = await ghFetch(`/user/repos?sort=${sort}&type=${type}&per_page=100`);
+      document.getElementById('repo-count-label').textContent = `${allRepos.length} repositories`;
+      renderRepos(allRepos);
+    } catch (e) { cont.innerHTML = `<div class="empty-state"><p>❌ ${e.message}</p></div>`; }
+  }
+
+  function renderRepos(repos) {
+    const cont = document.getElementById('repos-container');
+    if (!repos.length) { cont.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>Tiada repository dijumpai</p></div>'; return; }
+
+    const langColors = {'JavaScript':'#f1e05a','Python':'#3572A5','TypeScript':'#2b7489','Java':'#b07219','HTML':'#e34c26','CSS':'#563d7c','Go':'#00ADD8','Rust':'#dea584','PHP':'#4F5D95','C++':'#f34b7d','C':'#555555','Ruby':'#701516','Swift':'#FA7343','Kotlin':'#A97BFF','Shell':'#89e051','Dart':'#00B4AB'};
+
+    cont.innerHTML = `<div class="repo-grid">${repos.map(r => `
+      <div class="repo-card">
+        <div class="repo-card-header">
+          <div>
+            <div class="repo-name">${r.name}</div>
+            <div class="repo-desc">${r.description || '<span style="opacity:0.4">Tiada deskripsi</span>'}</div>
+          </div>
+          <span class="badge ${r.private ? 'badge-private' : 'badge-public'}">${r.private ? '🔒' : '🌐'} ${r.private ? 'private' : 'public'}</span>
+        </div>
+        ${r.topics?.length ? `<div style="margin-top:8px">${r.topics.slice(0,4).map(t=>`<span class="tag">${t}</span>`).join('')}</div>` : ''}
+        <div class="repo-meta">
+          ${r.language ? `<span><span class="lang-dot" style="background:${langColors[r.language]||'#8b949e'}"></span>${r.language}</span>` : ''}
+          <span>⭐ ${r.stargazers_count}</span>
+          <span>🍴 ${r.forks_count}</span>
+          <span>${timeSince(r.updated_at)}</span>
+        </div>
+        <div class="repo-actions">
+          <button class="btn btn-blue" onclick="viewRepo('${r.full_name}')">📂 Detail</button>
+          <button class="btn btn-ghost" onclick="window.open('${r.html_url}','_blank')">↗ Buka</button>
+          <button class="btn btn-red" onclick="promptDeleteRepo('${r.name}','${r.full_name}')">🗑</button>
+        </div>
+      </div>`).join('')}</div>`;
+  }
+
+  function filterRepos() {
+    const q = document.getElementById('repo-search').value.toLowerCase();
+    const filtered = allRepos.filter(r => r.name.toLowerCase().includes(q) || (r.description || '').toLowerCase().includes(q));
+    renderRepos(filtered);
+  }
+
+  // ---- CREATE REPO ----
+  async function createRepo() {
+    const name = document.getElementById('new-repo-name').value.trim();
+    const desc = document.getElementById('new-repo-desc').value.trim();
+    const priv = document.getElementById('new-repo-visibility').value === 'true';
+    const readme = document.getElementById('new-repo-readme').checked;
+
+    if (!name) { toast('Sila masukkan nama repository', 'error'); return; }
+
+    try {
+      const repo = await ghFetch('/user/repos', {
+        method: 'POST',
+        body: JSON.stringify({ name, description: desc, private: priv, auto_init: readme })
+      });
+      toast(`✅ Repository "${repo.name}" berjaya dicipta!`, 'success');
+      closeModal('create-repo-modal');
+      document.getElementById('new-repo-name').value = '';
+      document.getElementById('new-repo-desc').value = '';
+      loadRepos();
+      showPage('repos');
+    } catch (e) { toast('Gagal cipta repo: ' + e.message, 'error'); }
+  }
+
+  // ---- DELETE REPO ----
+  function promptDeleteRepo(name, fullName) {
+    repoToDelete = fullName;
+    document.getElementById('delete-repo-name').textContent = name;
+    document.getElementById('delete-confirm-input').value = '';
+    openModal('delete-repo-modal');
+  }
+
+  async function confirmDeleteRepo() {
+    const inp = document.getElementById('delete-confirm-input').value.trim();
+    const repoName = repoToDelete.split('/')[1];
+    if (inp !== repoName) { toast('Nama repo tidak sepadan!', 'error'); return; }
+
+    try {
+      await fetch(API + '/repos/' + repoToDelete, { method: 'DELETE', headers: headers() });
+      toast(`🗑 Repository "${repoName}" telah dipadamkan`, 'success');
+      closeModal('delete-repo-modal');
+      loadRepos();
+    } catch (e) { toast('Gagal padam: ' + e.message, 'error'); }
+  }
+
+  // ---- VIEW REPO ----
+  async function viewRepo(fullName) {
+    const cont = document.getElementById('repo-detail-content');
+    cont.innerHTML = '<div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>';
+    openModal('repo-detail-modal');
+
+    try {
+      const [repo, branches, commits] = await Promise.all([
+        ghFetch(`/repos/${fullName}`),
+        ghFetch(`/repos/${fullName}/branches?per_page=10`).catch(() => []),
+        ghFetch(`/repos/${fullName}/commits?per_page=5`).catch(() => [])
+      ]);
+
+      cont.innerHTML = `
+        <div class="modal-title">📦 ${repo.name}</div>
+        <p style="color:var(--text-muted);font-size:12px;margin-bottom:16px">${repo.description || 'Tiada deskripsi'}</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+          <a href="${repo.html_url}" target="_blank" class="btn btn-blue">↗ Buka di GitHub</a>
+          <button class="btn btn-ghost" onclick="copyToClipboard('${repo.clone_url}')">📋 Clone URL</button>
+          <button class="btn btn-red" onclick="closeModal('repo-detail-modal');promptDeleteRepo('${repo.name}','${repo.full_name}')">🗑 Padam</button>
+        </div>
+        <div class="section-grid">
+          <div>
+            <div class="card-title">📊 Statistik</div>
+            <div class="info-row"><span class="info-key">Stars</span><span class="info-val">⭐ ${repo.stargazers_count}</span></div>
+            <div class="info-row"><span class="info-key">Forks</span><span class="info-val">🍴 ${repo.forks_count}</span></div>
+            <div class="info-row"><span class="info-key">Watchers</span><span class="info-val">👁 ${repo.watchers_count}</span></div>
+            <div class="info-row"><span class="info-key">Issues</span><span class="info-val">🔴 ${repo.open_issues_count}</span></div>
+            <div class="info-row"><span class="info-key">Saiz</span><span class="info-val">${(repo.size/1024).toFixed(2)} MB</span></div>
+            <div class="info-row"><span class="info-key">Bahasa</span><span class="info-val">${repo.language || '—'}</span></div>
+            <div class="info-row"><span class="info-key">Default Branch</span><span class="info-val">${repo.default_branch}</span></div>
+            <div class="info-row"><span class="info-key">Visibility</span><span class="info-val">${repo.private ? '🔒 Private' : '🌐 Public'}</span></div>
+            <div class="info-row"><span class="info-key">Dicipta</span><span class="info-val">${new Date(repo.created_at).toLocaleDateString('ms-MY')}</span></div>
+          </div>
+          <div>
+            <div class="card-title">🌿 Branches (${branches.length})</div>
+            ${branches.slice(0,8).map(b=>`<div class="info-row"><span class="info-key">${b.name}</span><span class="info-val">${b.name === repo.default_branch ? '✅ default' : ''}</span></div>`).join('')}
+            <div class="divider"></div>
+            <div class="card-title">📝 Commit Terkini</div>
+            ${commits.slice(0,4).map(c=>`
+              <div class="list-item" style="padding:8px 0">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.commit.message.split('\n')[0]}</div>
+                  <div style="font-size:10px;color:var(--text-muted)">${c.commit.author?.name || '?'} · ${timeSince(c.commit.author?.date)}</div>
+                </div>
+                <span style="font-size:10px;color:var(--accent);font-family:monospace">${c.sha.substring(0,7)}</span>
+              </div>`).join('')}
+          </div>
+        </div>`;
+    } catch (e) { cont.innerHTML = `<div class="empty-state"><p>❌ ${e.message}</p></div>`; }
+  }
+
+  // ---- FOLLOWERS ----
+  async function loadFollowers() {
+    const cont = document.getElementById('followers-container');
+    try {
+      const users = await ghFetch('/user/followers?per_page=100');
+      renderUserGrid(cont, users, 'followers');
+    } catch (e) { cont.innerHTML = `<div class="empty-state"><p>❌ ${e.message}</p></div>`; }
+  }
+
+  async function loadFollowing() {
+    const cont = document.getElementById('following-container');
+    try {
+      const users = await ghFetch('/user/following?per_page=100');
+      renderUserGrid(cont, users, 'following');
+    } catch (e) { cont.innerHTML = `<div class="empty-state"><p>❌ ${e.message}</p></div>`; }
+  }
+
+  function renderUserGrid(cont, users, type) {
+    if (!users.length) { cont.innerHTML = '<div class="empty-state"><div class="icon">👤</div><p>Tiada pengguna</p></div>'; return; }
+    cont.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">
+      ${users.map(u => `
+        <div class="card" style="padding:16px;text-align:center;cursor:pointer" onclick="window.open('${u.html_url}','_blank')">
+          <img src="${u.avatar_url}" style="width:52px;height:52px;border-radius:50%;border:2px solid var(--border-bright);margin-bottom:10px" />
+          <div style="font-size:13px;font-weight:700">${u.login}</div>
+          <div style="font-size:10px;color:var(--accent);margin-top:6px">→ Lihat Profil</div>
+          ${type === 'following' ? `<button class="btn btn-red" style="margin-top:10px;width:100%;padding:6px;font-size:10px" onclick="event.stopPropagation();unfollowUser('${u.login}', this)">Unfollow</button>` : ''}
+        </div>`).join('')}
+    </div>`;
+  }
+
+  async function unfollowUser(login, btn) {
+    btn.disabled = true; btn.textContent = '...';
+    try {
+      await fetch(API + `/user/following/${login}`, { method: 'DELETE', headers: headers() });
+      toast(`✅ Unfollow @${login} berjaya`, 'success');
+      btn.closest('.card').remove();
+    } catch (e) { toast('Gagal: ' + e.message, 'error'); btn.disabled = false; btn.textContent = 'Unfollow'; }
+  }
+
+  // ---- GISTS ----
+  async function loadGists() {
+    const cont = document.getElementById('gists-container');
+    try {
+      const gists = await ghFetch('/gists?per_page=50');
+      if (!gists.length) { cont.innerHTML = '<div class="empty-state"><div class="icon">📄</div><p>Tiada gists lagi</p></div>'; return; }
+      cont.innerHTML = gists.map(g => {
+        const files = Object.values(g.files);
+        return `<div class="card" style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:700;color:var(--accent)">${files.map(f=>f.filename).join(', ')}</div>
+              <div style="font-size:11px;color:var(--text-muted);margin:6px 0">${g.description || 'Tiada deskripsi'}</div>
+              <div style="font-size:10px;color:var(--text-dim)">${timeSince(g.updated_at)} · ${g.public ? '🌐 Public' : '🔒 Secret'} · ${files.length} fail(s)</div>
+            </div>
+            <div style="display:flex;gap:6px;margin-left:12px">
+              <button class="btn btn-blue" onclick="window.open('${g.html_url}','_blank')">↗</button>
+              <button class="btn btn-red" onclick="deleteGist('${g.id}', this)">🗑</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    } catch (e) { cont.innerHTML = `<div class="empty-state"><p>❌ ${e.message}</p></div>`; }
+  }
+
+  async function createGist() {
+    const desc = document.getElementById('gist-desc').value;
+    const filename = document.getElementById('gist-filename').value.trim();
+    const content = document.getElementById('gist-content').value;
+    const pub = document.getElementById('gist-public').checked;
+
+    if (!filename || !content) { toast('Nama fail dan kandungan diperlukan', 'error'); return; }
+
+    try {
+      await ghFetch('/gists', { method: 'POST', body: JSON.stringify({ description: desc, public: pub, files: { [filename]: { content } } }) });
+      toast('✅ Gist berjaya dicipta!', 'success');
+      closeModal('create-gist-modal');
+      document.getElementById('gist-filename').value = '';
+      document.getElementById('gist-content').value = '';
+      loadGists();
+    } catch (e) { toast('Gagal cipta gist: ' + e.message, 'error'); }
+  }
+
+  async function deleteGist(id, btn) {
+    if (!confirm('Padam gist ini?')) return;
+    btn.disabled = true;
+    try {
+      await fetch(API + '/gists/' + id, { method: 'DELETE', headers: headers() });
+      toast('🗑 Gist dipadamkan', 'success');
+      loadGists();
+    } catch (e) { toast('Gagal: ' + e.message, 'error'); btn.disabled = false; }
+  }
+
+  // ---- SEARCH ----
+  async function doSearch() {
+    const q = document.getElementById('gh-search-input').value.trim();
+    const type = document.getElementById('gh-search-type').value;
+    if (!q) return;
+
+    const cont = document.getElementById('search-results');
+    cont.innerHTML = '<div class="empty-state"><div class="spinner" style="margin:0 auto"></div></div>';
+
+    try {
+      const data = await ghFetch(`/search/${type}?q=${encodeURIComponent(q)}&per_page=20`);
+      const items = data.items;
+      if (!items.length) { cont.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>Tiada hasil</p></div>'; return; }
+
+      if (type === 'repositories') {
+        cont.innerHTML = `<div class="repo-grid">${items.map(r => `
+          <div class="repo-card">
+            <div class="repo-card-header">
+              <div>
+                <div class="repo-name">${r.full_name}</div>
+                <div class="repo-desc">${r.description || '<span style="opacity:0.4">Tiada deskripsi</span>'}</div>
+              </div>
+            </div>
+            <div class="repo-meta">
+              ${r.language ? `<span>${r.language}</span>` : ''}
+              <span>⭐ ${r.stargazers_count}</span>
+              <span>🍴 ${r.forks_count}</span>
+            </div>
+            <div class="repo-actions">
+              <button class="btn btn-blue" onclick="window.open('${r.html_url}','_blank')">↗ Buka</button>
+              <button class="btn btn-green" onclick="forkRepo('${r.full_name}')">🍴 Fork</button>
+            </div>
+          </div>`).join('')}</div>`;
+      } else {
+        cont.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">
+          ${items.map(u => `
+            <div class="card" style="padding:16px;text-align:center;cursor:pointer" onclick="window.open('${u.html_url}','_blank')">
+              <img src="${u.avatar_url}" style="width:52px;height:52px;border-radius:50%;border:2px solid var(--border-bright);margin-bottom:10px" />
+              <div style="font-size:13px;font-weight:700">${u.login}</div>
+              <button class="btn btn-green" style="margin-top:10px;width:100%;padding:6px;font-size:10px" onclick="event.stopPropagation();followUser('${u.login}',this)">Follow</button>
+            </div>`).join('')}
+        </div>`;
+      }
+    } catch (e) { cont.innerHTML = `<div class="empty-state"><p>❌ ${e.message}</p></div>`; }
+  }
+
+  async function forkRepo(fullName) {
+    try {
+      await ghFetch(`/repos/${fullName}/forks`, { method: 'POST' });
+      toast(`✅ Fork berjaya!`, 'success');
+    } catch (e) { toast('Gagal fork: ' + e.message, 'error'); }
+  }
+
+  async function followUser(login, btn) {
+    btn.disabled = true; btn.textContent = '...';
+    try {
+      await fetch(API + `/user/following/${login}`, { method: 'PUT', headers: headers() });
+      toast(`✅ Follow @${login} berjaya`, 'success');
+      btn.textContent = '✓ Following'; btn.className = 'btn btn-ghost';
+      btn.style = 'margin-top:10px;width:100%;padding:6px;font-size:10px';
+    } catch (e) { toast('Gagal: ' + e.message, 'error'); btn.disabled = false; btn.textContent = 'Follow'; }
+  }
+
+  // ---- HELPERS ----
+  function timeSince(dateStr) {
+    const secs = Math.floor((new Date() - new Date(dateStr)) / 1000);
+    if (secs < 60) return 'baru sahaja';
+    if (secs < 3600) return Math.floor(secs/60) + ' minit lepas';
+    if (secs < 86400) return Math.floor(secs/3600) + ' jam lepas';
+    if (secs < 2592000) return Math.floor(secs/86400) + ' hari lepas';
+    if (secs < 31536000) return Math.floor(secs/2592000) + ' bulan lepas';
+    return Math.floor(secs/31536000) + ' tahun lepas';
+  }
+
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => toast('📋 Disalin!', 'success'));
+  }
+
+  // ---- AUTO-LOGIN ----
+  const saved = localStorage.getItem('gh_token');
+  if (saved) {
+    document.getElementById('token-input').value = saved;
+    TOKEN = saved;
+    ghFetch('/user').then(u => { currentUser = u; startApp(); }).catch(() => { TOKEN = ''; localStorage.removeItem('gh_token'); });
+  }
+</script>
+</body>
+</html>
